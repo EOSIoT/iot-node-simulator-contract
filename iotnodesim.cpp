@@ -68,14 +68,19 @@ void iotnodesim::restart()
         s.reset_state();
     });
 }
-void iotnodesim::submit(account_name user)
+void iotnodesim::submit(account_name user, string unique_id, string memo)
 { 
     /* Require that submitter has signed this action */
     /* In the interest of simplicity anyone can "submit"
      * to the simulation.
      */
     require_auth(user);
-    print("Data submitted by: ", name{ user });
+
+    // Check if stats data already exists
+    auto itr = state.find(_self);
+    eosio_assert(itr != state.end(), "stats not yet started");
+
+    print("Data submitted by: ", name{ user }, " id: ", unique_id, " memo: ", memo);
 
     /* Update the current statistics */
     
@@ -83,7 +88,7 @@ void iotnodesim::submit(account_name user)
 
 void iotnodesim::version()
 {
-    print("EOSIOT IoT node simulation contract build 5");
+    print("EOSIOT IoT node simulation contract build 6");
 
 };
 
