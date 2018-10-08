@@ -69,6 +69,7 @@ public:
 
         uint32_t num_transactions;
         uint32_t time_first_tx_s;
+        uint32_t time_last_tx_s;
 
         simstate() {
             reset_state();
@@ -79,11 +80,12 @@ public:
             tps_stats.reset();
             num_transactions = 0;
             time_first_tx_s = 0;
+            time_last_tx_s = 0;
         }
 
         auto primary_key() const { return host; }
 
-        EOSLIB_SERIALIZE(simstate, (host)(latency_stats)(tps_stats)(num_transactions)(time_first_tx_s))
+        EOSLIB_SERIALIZE(simstate, (host)(latency_stats)(tps_stats)(num_transactions)(time_first_tx_s)(time_last_tx_s))
     };
 
     /* Node simulation stress test state 
@@ -94,11 +96,17 @@ public:
 
     /// @abi action
     /// Start the simulation - only the contract host can call this
+    /// Creates the state table.
     void start();
 
     /// @abi action
     /// Restart the simulation - only the contract host can call this
     void restart();
+
+    /// @abi action
+    /// Stop the simulation - only the contract host can call this
+    /// Removes the state table.
+    void stop();
 
     /// @abi action
     /// Submit data to the platform

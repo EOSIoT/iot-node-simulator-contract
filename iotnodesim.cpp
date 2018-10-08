@@ -71,6 +71,20 @@ void iotnodesim::restart()
     });
 }
 
+#if 1
+/// Stop the simulation
+void iotnodesim::stop()
+{
+    require_auth(_self);
+    print("stop!");
+
+    // Check if stats data already exists
+    auto itr = state.find(_self);
+    eosio_assert(itr != state.end(), "stats not yet started");
+
+    state.erase(itr);
+}
+#endif
 
 void compute_stats(
     uint32_t now_time,
@@ -108,6 +122,7 @@ void iotnodesim::submit(account_name user, string unique_id, uint32_t node_time,
     const uint32_t latency = now_time - node_time;
 
     state.modify(itr, itr->host, [&](auto& s) {
+        s.time_last_tx_s = now_time;
         if (s.num_transactions == 0) {
             s.time_first_tx_s = now_time;
         }
@@ -142,9 +157,8 @@ void iotnodesim::submit(account_name user, string unique_id, uint32_t node_time,
 
 void iotnodesim::version()
 {
-    print("EOSIOT IoT node simulation contract build 7");
+    print("EOSIOT IoT node simulation contract build 9");
 
 };
 
-EOSIO_ABI(iotnodesim, (start)(restart)(submit)(version))
-
+EOSIO_ABI(iotnodesim, (start)(restart)(stop)(submit)(version))
