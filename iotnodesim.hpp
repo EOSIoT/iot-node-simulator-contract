@@ -104,7 +104,8 @@ public:
     /// Submit data to the platform
     /// account name ensures user signed transaction with existing account
     /// unique_id is required to ensure each transaction is unique
-    void submit(account_name user, string unique_id, string memo);
+    /// node_time is node's current time at submission, in seconds UTC (same timebase as EOS now() API)
+    void submit(account_name user, string unique_id, uint32_t node_time, string memo);
 //    void submit(account_name user);
 
     /// @abi action
