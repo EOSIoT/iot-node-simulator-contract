@@ -83,12 +83,16 @@ void iotnodesim::submit(account_name user, string unique_id, string memo)
     print("Data submitted by: ", name{ user }, " id: ", unique_id, " memo: ", memo);
 
     /* Update the current statistics */
+
+    state.modify(itr, itr->host, [](auto& s) {
+        s.num_transactions++;
+    });
     
 }
 
 void iotnodesim::version()
 {
-    print("EOSIOT IoT node simulation contract build 6");
+    print("EOSIOT IoT node simulation contract build 7");
 
 };
 

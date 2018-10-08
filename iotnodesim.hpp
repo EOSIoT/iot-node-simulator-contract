@@ -35,6 +35,9 @@ SOFTWARE.
 
 #include <eosiolib/eosio.hpp>
 #include <math.h>
+#include <string>
+
+using std::string;
 
 class iotnodesim : public eosio::contract {
 
@@ -42,23 +45,23 @@ public:
 
     iotnodesim(account_name self) : contract(self), state(self, self) {}
 
-
     struct stats {
-        float min;
-        float max;
-        float var;
-        float mean;
+        double min;
+        double max;
+        double var;
+        double mean;
 
         void reset() {
-            min = HUGE_VALF;
-            max = 0.0f;
-            var = 0.0f;
-            mean = 0.0f;
+            min = HUGE_VAL;
+            max = 0.0;
+            var = 0.0;
+            mean = 0.0;
         }
     };
 
 
-    struct sim_state {
+    // @abi table statetable i64
+    struct simstate {
         account_name  host;
 
         stats latency_stats;
@@ -67,7 +70,7 @@ public:
         uint32_t num_transactions;
         uint32_t time_first_tx_s;
 
-        sim_state() {
+        simstate() {
             reset_state();
         }
 
@@ -80,14 +83,14 @@ public:
 
         auto primary_key() const { return host; }
 
-        EOSLIB_SERIALIZE(sim_state, (host)(latency_stats)(tps_stats)(num_transactions)(time_first_tx_s))
+        EOSLIB_SERIALIZE(simstate, (host)(latency_stats)(tps_stats)(num_transactions)(time_first_tx_s))
     };
 
     /* Node simulation stress test state 
      * View this on the chain with:
      *    cleos get table eosiotstess <user> state
      */
-    typedef eosio::multi_index<N(state), sim_state> statetable;
+    typedef eosio::multi_index<N(statetable), simstate> statetable;
 
     /// @abi action
     /// Start the simulation - only the contract host can call this
@@ -99,8 +102,10 @@ public:
 
     /// @abi action
     /// Submit data to the platform
-    void submit(account_name user);
-
+    /// account name ensures user signed transaction with existing account
+    /// unique_id is required to ensure each transaction is unique
+    void submit(account_name user, string unique_id, string memo);
+//    void submit(account_name user);
 
     /// @abi action
     /// Do something
