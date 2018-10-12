@@ -36,32 +36,30 @@ The data stored in EOS smart contract persistent-state tables called "multi-inde
 
 * > curl --data '{"json":true,"code":"eosiotstress","scope":"eosiotstress","table":"statetable"}' 'http://jungle.cryptolions.io:18888/v1/chain/get_table_rows'
 * Postman: POST: http://jungle.cryptolions.io:18888/v1/chain/get_table_rows  Body: {"json":true,"code":"eosiotstress","scope":"eosiotstress","table":"statetable"}
-* > cleos get table eosiotstress eosiotstress statetable
 
-Result:
+The simulation for 1000 nodes at 600 second reporting interval yeilded the following.  The results are bang-on with expectations: the tps mean tended toward the expected value of 1.7 :
 ```
 {
-    "rows": [
-        {
-            "host": "eosiotstress",
-            "latency_stats": {
-                "min": "3.00000000000000000",
-                "max": "154.00000000000000000",
-                "var": "0.00000000000000000",
-                "mean": "45.74663499604110939"
-            },
-            "tps_stats": {
-                "min": "1.19215686274509802",
-                "max": "5.50000000000000000",
-                "var": "0.00000000000000000",
-                "mean": "2.11541123619145077"
-            },
-            "num_transactions": 1263,
-            "time_first_tx_s": 1539055917,
-            "time_last_tx_s": 1539056605
-        }
-    ],
-    "more": false
+  "rows": [{
+      "host": "eosiotstress",
+      "latency_stats": {
+        "min": "1.00000000000000000",
+        "max": "22.00000000000000000",
+        "var": "0.00000000000000000",
+        "mean": "1.84167019923696662"
+      },
+      "tps_stats": {
+        "min": "1.38195664909197413",
+        "max": "4.00000000000000000",
+        "var": "0.00000000000000000",
+        "mean": "1.71525493223053727"
+      },
+      "num_transactions": 4718,
+      "time_first_tx_s": 1539364909,
+      "time_last_tx_s": 1539368323
+    }
+  ],
+  "more": false
 }
 ```
 
