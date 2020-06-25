@@ -33,17 +33,21 @@ SOFTWARE.
 *         Evan Ross <contact@firmwaremodules.com>
 */
 
-#include <eosiolib/eosio.hpp>
+#include <eosio/eosio.hpp>
 #include <math.h>
 #include <string>
 
+using namespace eosio;
+
 using std::string;
 
-class iotnodesim : public eosio::contract {
+class [[eosio::contract("iotnodesim")]] iotnodesim : public contract {
 
 public:
 
-    iotnodesim(account_name self) : contract(self), state(self, self) {}
+    using contract::contract;
+
+    iotnodesim(name receiver, name code, datastream<const char*> ds) :contract(receiver, code, ds) {}
 
     struct stats {
         double min;
@@ -60,9 +64,11 @@ public:
     };
 
 
-    // @abi table statetable i64
-    struct simstate {
-        account_name  host;
+    
+    struct [[eosio::table]] simstate {
+        name  host;
+
+        uint32_t lifetime_resets;
 
         stats latency_stats;
         stats tps_stats;
@@ -71,9 +77,9 @@ public:
         uint32_t time_first_tx_s;
         uint32_t time_last_tx_s;
 
-        simstate() {
-            reset_state();
-        }
+        //simstate() {
+        //    reset_state();
+        //}
 
         void reset_state() {
             latency_stats.reset();
@@ -83,47 +89,50 @@ public:
             time_last_tx_s = 0;
         }
 
-        auto primary_key() const { return host; }
+        uint64_t primary_key() const { return host.value; }
 
-        EOSLIB_SERIALIZE(simstate, (host)(latency_stats)(tps_stats)(num_transactions)(time_first_tx_s)(time_last_tx_s))
+        
     };
 
     /* Node simulation stress test state 
      * View this on the chain with:
      *    cleos get table eosiotstess <user> state
      */
-    typedef eosio::multi_index<N(statetable), simstate> statetable;
+    typedef eosio::multi_index<"statetable"_n, simstate> statetable;
 
-    /// @abi action
+
     /// Start the simulation - only the contract host can call this
-    /// Creates the state table.
+    /// Creates the state table. 
+    [[eosio::action]]
     void start();
 
-    /// @abi action
-    /// Restart the simulation - only the contract host can call this
-    void restart();
+    
+    /// Restart the simulation - anyone can call this
+    [[eosio::action]]
+    void restart(name node);
 
-    /// @abi action
+    
     /// Stop the simulation - only the contract host can call this
     /// Removes the state table.
+    [[eosio::action]]
     void stop();
 
-    /// @abi action
+    
     /// Submit data to the platform
     /// account name ensures user signed transaction with existing account
     /// unique_id is required to ensure each transaction is unique
     /// node_time is node's current time at submission, in seconds UTC (same timebase as EOS now() API)
-    void submit(account_name user, string unique_id, uint32_t node_time, string memo);
+    [[eosio::action]]
+    void submit(name user, string unique_id, uint32_t node_time, string memo);
 //    void submit(account_name user);
 
-    /// @abi action
+    
     /// Do something
+    [[eosio::action]]
     void version();
 
 
 private:
 
-    /* Instance of the simulation state table */
-    statetable state;
-
+ 
 };

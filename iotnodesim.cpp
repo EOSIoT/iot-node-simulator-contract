@@ -1,7 +1,7 @@
 /*
 MIT License
 
-Copyright(c) 2018 Evan Ross
+Copyright(c) 2018-2020 Evan Ross, Measurement Earth
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files(the "Software"), to deal
@@ -24,7 +24,7 @@ SOFTWARE.
 
 /**
 * \file
-*         This smart contract runs on the EOS blockchain and acts
+*         This smart contract runs on an EOSIO software blockchain and acts
 *         as the "end point" accepting node data submissions while
 *         calculating statistics on the data like transaction latency
 *         and throughput (TPS).
@@ -34,40 +34,62 @@ SOFTWARE.
 */
 
 #include "iotnodesim.hpp"
-#include <eosiolib/print.hpp>
+#include <eosio/system.hpp>
 
 using namespace eosio;
 
 #define DEBUG 0
+#if DEBUG
+#define PRINT(...) print(__VA_ARGS__)
+#else
+#define PRINT(...)
+#endif
+
+// For table instantiation, please note:
+//
+// The first parameter "code", which specifies the owner of this table. As the 
+// owner, the account will be charged for storage costs. Also, only that account can modify or delete the data in this
+// table unless another payer is specified. Here we use the get_self() function which will pass the name of this
+// contract.
+// The second parameter "scope" which ensures the uniqueness of the table in the scope of this contract. In this case,
+// since we only have one table we can use the value from get_first_receiver(). The value returned from the
+// get_first_receiver function is the account name on which this contract is deployed to.
+
 
 void iotnodesim::start()
 {
-    require_auth(_self);
-    print("start!");
+    require_auth(get_self());
+    PRINT("start!");
+
+    statetable state(get_self(), get_first_receiver().value);
 
     // Check if stats data already exists
-    auto itr = state.find(_self);
-    eosio_assert(itr == state.end(), "stats already started");
+    auto itr = state.find(get_self().value);
+    check(itr == state.end(), "stats already started");
 
-    state.emplace(_self, [&](auto& s) {
+    state.emplace(get_self(), [&](auto& s) {
         s.reset_state();
-        s.host = _self;
+        s.host = get_self();
+        s.lifetime_resets = 0;
     });
 
 }
 
 /// Restart the simulation
-void iotnodesim::restart()
+void iotnodesim::restart(name node)
 {
-    require_auth(_self);
-    print("restart!");
+    require_auth(node);
+    PRINT("restart!");
+
+    statetable state(get_self(), get_first_receiver().value);
 
     // Check if stats data already exists
-    auto itr = state.find(_self);
-    eosio_assert(itr != state.end(), "stats not yet started");
+    auto itr = state.find(get_self().value);
+    check(itr != state.end(), "stats not yet started");
 
     state.modify(itr, itr->host, [](auto& s) {
         s.reset_state();
+        s.lifetime_resets++;
     });
 }
 
@@ -75,12 +97,14 @@ void iotnodesim::restart()
 /// Stop the simulation
 void iotnodesim::stop()
 {
-    require_auth(_self);
-    print("stop!");
+    require_auth(get_self());
+    PRINT("stop!");
+
+    statetable state(get_self(), get_first_receiver().value);
 
     // Check if stats data already exists
-    auto itr = state.find(_self);
-    eosio_assert(itr != state.end(), "stats not yet started");
+    auto itr = state.find(get_self().value);
+    check(itr != state.end(), "stats not yet started");
 
     state.erase(itr);
 }
@@ -94,7 +118,7 @@ void compute_stats(
 }
 
 
-void iotnodesim::submit(account_name user, string unique_id, uint32_t node_time, string memo)
+void iotnodesim::submit(name user, string unique_id, uint32_t node_time, string memo)
 { 
     /* Require that submitter has signed this action */
     /* In the interest of simplicity any account can "submit"
@@ -102,18 +126,19 @@ void iotnodesim::submit(account_name user, string unique_id, uint32_t node_time,
      */
     require_auth(user);
 
+    statetable state(get_self(), get_first_receiver().value);
+    
     // Check if stats data already exists
-    auto itr = state.find(_self);
-    eosio_assert(itr != state.end(), "stats not yet started");
-    eosio_assert(node_time != 0, "invalid node time");
+    auto itr = state.find(get_self().value);
+    check(itr != state.end(), "stats not yet started");
+    check(node_time != 0, "invalid node time");
 
 
-    const uint32_t now_time = now();
+    const uint32_t now_time = current_time_point().sec_since_epoch();
 #if DEBUG
-    print("Data submitted by: ", name{ user }, " id: ", unique_id, " memo: ", memo, "\n");
-    print(current_time(), "\n");
-    print(now_time, "\n");
-    print(node_time, "\n");
+    PRINT("Data submitted by: ", name{ user }, " id: ", unique_id, " memo: ", memo, "\n");
+    PRINT(now_time, "\n");
+    PRINT(node_time, "\n");
 #endif
 
     /* 'itr' is a pointer to the table structure */
@@ -157,8 +182,9 @@ void iotnodesim::submit(account_name user, string unique_id, uint32_t node_time,
 
 void iotnodesim::version()
 {
-    print("EOSIOT IoT node simulation contract build 9");
+    /* Important: this guarantees uniqueness of each build of the contract. */
+    PRINT("EOSIOT IoT node simulation contract build " __DATE__ " " __TIME__ "\n");
 
 };
 
-EOSIO_ABI(iotnodesim, (start)(restart)(stop)(submit)(version))
+
