@@ -2,7 +2,7 @@
 
 The goal of this simulation is to understand the actual performance of an EOSIO blockchain when ingesting and distributing data
 from potentially thousands or millions of IoT devices, and specifically for the **Measurement Earth Global Open Data and Trusted Sensor Platform**
-https://measurement.earth.  This contract is designed to work with the [IoT node simulator software](https://github.com/EOSIoT/iot-node-simulator).
+https://www.measurement.earth.  This contract is designed to work with the [IoT node simulator software](https://github.com/EOSIoT/iot-node-simulator).
 
 This contract is loaded onto an account designated to receive the data transactions submitted from the simulated nodes.  
 The contract generates statistics about two key metrics we're interested in for considering the feasibility of building a massive IoT network on a blockchain:
